@@ -2,7 +2,7 @@
 
 An Obsidian plugin that displays today's events from multiple ICS calendar feeds in your sidebar. Perfect for keeping your schedule visible while working in your notes.
 
-<img width="413" height="612" alt="image" src="https://github.com/user-attachments/assets/9518d051-2b33-47c3-b4d6-ad8badaf8779" />
+<img width="385" height="614" alt="image" src="https://github.com/user-attachments/assets/b56aabe6-1424-4aa0-bb7e-7e2718e969da" />
 
 ## Features
 
