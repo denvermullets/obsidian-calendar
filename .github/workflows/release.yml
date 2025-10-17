@@ -29,7 +29,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${GITHUB_REF#refs/tags/}"
-          cp manifest.json styles.css build/manifest.json
+          cp manifest.json build/manifest.json
+          cp styles.css build/styles.css
           cd build
           gh release create "$tag" \
             --title="$tag" \
