@@ -45,7 +45,7 @@
   left: 1rem;
   width: 3px;
   border-radius: 2px;
-  background-color: var(--interactive-accent);
+  background-color: var(--event-color, var(--interactive-accent));
 }
 
 /* Content column */
@@ -59,12 +59,12 @@
 .calendar-event-time {
   font-weight: 500;
   color: var(--text-muted);
-  font-size: 0.85em;
+  font-size: 0.7em;
 }
 
 /* Title */
 .calendar-event-title {
-  font-size: 1.05em;
+  font-size: 0.8em;
   font-weight: 600;
   color: var(--text-normal);
   line-height: 1.3;
