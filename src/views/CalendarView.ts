@@ -61,9 +61,9 @@ export class CalendarView extends ItemView {
     container.empty();
     container.addClass("calendar-view-container");
 
-    if (!this.plugin.settings.icsUrl) {
+    if (this.plugin.settings.icsUrls.length === 0) {
       container.createEl("div", {
-        text: "No ICS URL configured. Please set it in plugin settings.",
+        text: "No calendar URLs configured. Please add calendars in plugin settings.",
         cls: "calendar-empty-state",
       });
       return;
@@ -132,20 +132,45 @@ export class CalendarView extends ItemView {
   }
 
   private async fetchAndParseCalendar(): Promise<CalendarEvent[]> {
-    const response = await requestUrl({
-      url: this.plugin.settings.icsUrl,
-      method: "GET",
-    });
-
-    const jcalData = ICAL.parse(response.text);
-    const comp = new ICAL.Component(jcalData);
-    const vevents = comp.getAllSubcomponents("vevent");
-
     // Set up date range for today
     const today = getTodayMidnight();
     const tomorrow = getTomorrowMidnight();
 
-    const events: CalendarEvent[] = [];
+    const allEvents: CalendarEvent[] = [];
+
+    // Fetch and parse events from each calendar URL
+    for (const url of this.plugin.settings.icsUrls) {
+      if (!url.trim()) {
+        continue; // Skip empty URLs
+      }
+
+      try {
+        const response = await requestUrl({
+          url: url,
+          method: "GET",
+        });
+
+        const jcalData = ICAL.parse(response.text);
+        const comp = new ICAL.Component(jcalData);
+        const vevents = comp.getAllSubcomponents("vevent");
+
+        this.parseEvents(vevents, today, tomorrow, allEvents);
+      } catch (error) {
+        console.error(`Failed to fetch calendar from ${url}:`, error);
+        // Continue with other calendars even if one fails
+      }
+    }
+
+    console.log(`Total events parsed: ${allEvents.length}`);
+    return allEvents;
+  }
+
+  private parseEvents(
+    vevents: any[],
+    today: Date,
+    tomorrow: Date,
+    events: CalendarEvent[]
+  ): void {
 
     vevents.forEach((vevent) => {
       const event = new ICAL.Event(vevent);
@@ -212,8 +237,5 @@ export class CalendarView extends ItemView {
         });
       }
     });
-
-    console.log(`Total events parsed: ${events.length}`);
-    return events;
   }
 }

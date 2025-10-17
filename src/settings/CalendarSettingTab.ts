@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type CalendarPlugin from "../main";
+import { renderCalendarUrlList } from "./settingsHelpers";
 
 export class CalendarSettingTab extends PluginSettingTab {
   plugin: CalendarPlugin;
@@ -14,19 +15,12 @@ export class CalendarSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    new Setting(containerEl)
-      .setName("ICS Calendar URL")
-      .setDesc("Enter the ICS URL from your calendar (e.g., Google Calendar ICS link)")
-      .addText((text) =>
-        text
-          .setPlaceholder("https://calendar.google.com/...")
-          .setValue(this.plugin.settings.icsUrl)
-          .onChange(async (value) => {
-            this.plugin.settings.icsUrl = value;
-            await this.plugin.saveSettings();
-          })
-      );
+    containerEl.createEl("h2", { text: "Calendar Settings" });
 
+    // Render calendar URL list
+    renderCalendarUrlList(containerEl, this.plugin, () => this.display());
+
+    // Refresh interval setting
     new Setting(containerEl)
       .setName("Refresh Interval")
       .setDesc("How often to refresh the calendar (in minutes)")

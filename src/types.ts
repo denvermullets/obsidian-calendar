@@ -1,5 +1,5 @@
 export interface CalendarPluginSettings {
-  icsUrl: string;
+  icsUrls: string[];
   refreshInterval: number; // in minutes
 }
 

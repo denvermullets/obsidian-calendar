@@ -1,7 +1,7 @@
 import { CalendarPluginSettings } from "./types";
 
 export const DEFAULT_SETTINGS: CalendarPluginSettings = {
-  icsUrl: "",
+  icsUrls: [],
   refreshInterval: 30,
 };
 
