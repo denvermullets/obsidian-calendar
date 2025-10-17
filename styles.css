@@ -1,0 +1,54 @@
+.calendar-view-container {
+	padding: 1rem;
+}
+
+.calendar-header {
+	margin-bottom: 1rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.calendar-event-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.calendar-event-item {
+	padding: 0.75rem;
+	background-color: var(--background-secondary);
+	border-radius: 6px;
+	border-left: 3px solid var(--interactive-accent);
+}
+
+.calendar-event-time {
+	font-size: 0.9em;
+	color: var(--text-muted);
+	margin-bottom: 0.25rem;
+	font-weight: 500;
+}
+
+.calendar-event-title {
+	font-size: 1em;
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.calendar-event-location {
+	font-size: 0.85em;
+	color: var(--text-muted);
+	margin-top: 0.25rem;
+}
+
+.calendar-empty-state {
+	padding: 2rem;
+	text-align: center;
+	color: var(--text-muted);
+}
+
+.calendar-error {
+	padding: 1rem;
+	background-color: var(--background-modifier-error);
+	border-radius: 6px;
+	color: var(--text-error);
+}
