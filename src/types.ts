@@ -11,6 +11,7 @@ export interface CalendarEvent {
   description: string;
   conferenceLink: string;
   attendeeCount: number;
+  isAllDay: boolean;
 }
 
 export interface FormattedEvent {
@@ -20,4 +21,5 @@ export interface FormattedEvent {
   hasConferenceLink: boolean;
   conferenceLink: string;
   attendeeCount: number;
+  isAllDay: boolean;
 }

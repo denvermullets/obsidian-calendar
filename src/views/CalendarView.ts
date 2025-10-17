@@ -135,7 +135,15 @@ export class CalendarView extends ItemView {
     const comp = new ICAL.Component(jcalData);
     const vevents = comp.getAllSubcomponents("vevent");
 
-    const events: CalendarEvent[] = vevents.map((vevent) => {
+    // Set up date range for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const events: CalendarEvent[] = [];
+
+    vevents.forEach((vevent) => {
       const event = new ICAL.Event(vevent);
 
       // Extract conference/video link from description or location
@@ -162,17 +170,69 @@ export class CalendarView extends ItemView {
       // Get attendee count
       const attendees = vevent.getAllProperties("attendee");
 
-      return {
-        title: event.summary || "Untitled Event",
-        startDate: event.startDate.toJSDate(),
-        endDate: event.endDate.toJSDate(),
-        location: location,
-        description: description,
-        conferenceLink: conferenceLink,
-        attendeeCount: attendees.length,
-      };
+      // Detect if this is an all-day event
+      const isAllDay = event.startDate.isDate || false;
+
+      // Check if this is a recurring event
+      if (event.isRecurring()) {
+        console.log(`Recurring event found: ${event.summary}`);
+
+        // Expand recurring events for today only
+        const iter = event.iterator();
+        let next;
+
+        // Iterate through occurrences (with a safety limit)
+        let count = 0;
+        const maxIterations = 1000; // Safety limit
+
+        while ((next = iter.next()) && count < maxIterations) {
+          count++;
+          const occurrenceDate = next.toJSDate();
+
+          // Check if this occurrence is today
+          const occurrenceDay = new Date(occurrenceDate);
+          occurrenceDay.setHours(0, 0, 0, 0);
+
+          if (occurrenceDay.getTime() === today.getTime()) {
+            // This occurrence is today, add it
+            const endDate = event.endDate ? event.endDate.toJSDate() : occurrenceDate;
+
+            events.push({
+              title: event.summary || "Untitled Event",
+              startDate: occurrenceDate,
+              endDate: endDate,
+              location: location,
+              description: description,
+              conferenceLink: conferenceLink,
+              attendeeCount: attendees.length,
+              isAllDay: isAllDay,
+            });
+
+            console.log(`Found today's occurrence of recurring event: ${event.summary}`);
+            break; // Found today's occurrence, stop iterating
+          }
+
+          // If we've passed today, stop looking
+          if (occurrenceDay > today) {
+            break;
+          }
+        }
+      } else {
+        // Non-recurring event - add as-is
+        events.push({
+          title: event.summary || "Untitled Event",
+          startDate: event.startDate.toJSDate(),
+          endDate: event.endDate.toJSDate(),
+          location: location,
+          description: description,
+          conferenceLink: conferenceLink,
+          attendeeCount: attendees.length,
+          isAllDay: isAllDay,
+        });
+      }
     });
 
+    console.log(`Total events parsed: ${events.length}`);
     return events;
   }
 
@@ -183,25 +243,59 @@ export class CalendarView extends ItemView {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    console.log("Filtering for today:", today.toISOString());
+    console.log("Total events to filter:", events.length);
+
     const todayEvents = events.filter((event) => {
-      const eventDate = new Date(event.startDate);
-      return eventDate >= today && eventDate < tomorrow;
+      if (event.isAllDay) {
+        // For all-day events, compare just the date portion (ignore time/timezone)
+        const eventDate = new Date(event.startDate);
+        eventDate.setHours(0, 0, 0, 0);
+        const matches = eventDate.getTime() === today.getTime();
+        console.log(`All-day event "${event.title}":`, {
+          eventDate: eventDate.toISOString(),
+          today: today.toISOString(),
+          matches,
+        });
+        return matches;
+      } else {
+        // For timed events, use the existing range check
+        const matches = event.startDate >= today && event.startDate < tomorrow;
+        console.log(`Timed event "${event.title}":`, {
+          startDate: event.startDate.toISOString(),
+          matches,
+        });
+        return matches;
+      }
     });
 
-    // Sort by start time
-    todayEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+    console.log(`Events matching today: ${todayEvents.length}`);
+
+    // Sort with all-day events first, then by start time
+    todayEvents.sort((a, b) => {
+      // All-day events come first
+      if (a.isAllDay && !b.isAllDay) return -1;
+      if (!a.isAllDay && b.isAllDay) return 1;
+      // Otherwise sort by start time
+      return a.startDate.getTime() - b.startDate.getTime();
+    });
 
     return todayEvents.map((event) => ({
       title: event.title,
-      time: this.formatTime(event.startDate, event.endDate),
+      time: this.formatTime(event.startDate, event.endDate, event.isAllDay),
       location: event.location,
       hasConferenceLink: !!event.conferenceLink,
       conferenceLink: event.conferenceLink,
       attendeeCount: event.attendeeCount,
+      isAllDay: event.isAllDay,
     }));
   }
 
-  private formatTime(start: Date, end: Date): string {
+  private formatTime(start: Date, end: Date, isAllDay: boolean): string {
+    if (isAllDay) {
+      return "All day";
+    }
+
     const formatHour = (date: Date) => {
       const hours = date.getHours();
       const minutes = date.getMinutes();
