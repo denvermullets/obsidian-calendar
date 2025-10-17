@@ -1,8 +1,14 @@
 import { ItemView, WorkspaceLeaf, requestUrl } from "obsidian";
 import ICAL from "ical.js";
-import { CalendarEvent, FormattedEvent } from "../types";
+import { CalendarEvent } from "../types";
 import { VIEW_TYPE_CALENDAR } from "../constants";
 import type CalendarPlugin from "../main";
+import {
+  extractConferenceLink,
+  filterAndSortTodayEvents,
+  getTodayMidnight,
+  getTomorrowMidnight,
+} from "../utils/calendarHelpers";
 
 export class CalendarView extends ItemView {
   plugin: CalendarPlugin;
@@ -65,7 +71,7 @@ export class CalendarView extends ItemView {
 
     try {
       const events = await this.fetchAndParseCalendar();
-      const todayEvents = this.filterTodayEvents(events);
+      const todayEvents = filterAndSortTodayEvents(events);
 
       if (todayEvents.length === 0) {
         container.createEl("div", {
@@ -136,10 +142,8 @@ export class CalendarView extends ItemView {
     const vevents = comp.getAllSubcomponents("vevent");
 
     // Set up date range for today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const today = getTodayMidnight();
+    const tomorrow = getTomorrowMidnight();
 
     const events: CalendarEvent[] = [];
 
@@ -147,36 +151,15 @@ export class CalendarView extends ItemView {
       const event = new ICAL.Event(vevent);
 
       // Extract conference/video link from description or location
-      let conferenceLink = "";
       const description = event.description || "";
       const location = event.location || "";
-
-      // Look for common video conferencing URLs
-      const urlRegex = /(https?:\/\/[^\s]+)/g;
-      const descriptionUrls = description.match(urlRegex) || [];
-      const locationUrls = location.match(urlRegex) || [];
-
-      // Prioritize known video conferencing platforms
-      const allUrls = [...descriptionUrls, ...locationUrls];
-      conferenceLink =
-        allUrls.find(
-          (url) =>
-            url.includes("zoom.us") ||
-            url.includes("meet.google.com") ||
-            url.includes("teams.microsoft.com") ||
-            url.includes("webex.com")
-        ) || "";
+      const conferenceLink = extractConferenceLink(description, location);
 
       // Get attendee count
       const attendees = vevent.getAllProperties("attendee");
-
-      // Detect if this is an all-day event
       const isAllDay = event.startDate.isDate || false;
 
-      // Check if this is a recurring event
       if (event.isRecurring()) {
-        console.log(`Recurring event found: ${event.summary}`);
-
         // Expand recurring events for today only
         const iter = event.iterator();
         let next;
@@ -207,8 +190,6 @@ export class CalendarView extends ItemView {
               attendeeCount: attendees.length,
               isAllDay: isAllDay,
             });
-
-            console.log(`Found today's occurrence of recurring event: ${event.summary}`);
             break; // Found today's occurrence, stop iterating
           }
 
@@ -234,79 +215,5 @@ export class CalendarView extends ItemView {
 
     console.log(`Total events parsed: ${events.length}`);
     return events;
-  }
-
-  private filterTodayEvents(events: CalendarEvent[]): FormattedEvent[] {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    console.log("Filtering for today:", today.toISOString());
-    console.log("Total events to filter:", events.length);
-
-    const todayEvents = events.filter((event) => {
-      if (event.isAllDay) {
-        // For all-day events, compare just the date portion (ignore time/timezone)
-        const eventDate = new Date(event.startDate);
-        eventDate.setHours(0, 0, 0, 0);
-        const matches = eventDate.getTime() === today.getTime();
-        console.log(`All-day event "${event.title}":`, {
-          eventDate: eventDate.toISOString(),
-          today: today.toISOString(),
-          matches,
-        });
-        return matches;
-      } else {
-        // For timed events, use the existing range check
-        const matches = event.startDate >= today && event.startDate < tomorrow;
-        console.log(`Timed event "${event.title}":`, {
-          startDate: event.startDate.toISOString(),
-          matches,
-        });
-        return matches;
-      }
-    });
-
-    console.log(`Events matching today: ${todayEvents.length}`);
-
-    // Sort with all-day events first, then by start time
-    todayEvents.sort((a, b) => {
-      // All-day events come first
-      if (a.isAllDay && !b.isAllDay) return -1;
-      if (!a.isAllDay && b.isAllDay) return 1;
-      // Otherwise sort by start time
-      return a.startDate.getTime() - b.startDate.getTime();
-    });
-
-    return todayEvents.map((event) => ({
-      title: event.title,
-      time: this.formatTime(event.startDate, event.endDate, event.isAllDay),
-      location: event.location,
-      hasConferenceLink: !!event.conferenceLink,
-      conferenceLink: event.conferenceLink,
-      attendeeCount: event.attendeeCount,
-      isAllDay: event.isAllDay,
-    }));
-  }
-
-  private formatTime(start: Date, end: Date, isAllDay: boolean): string {
-    if (isAllDay) {
-      return "All day";
-    }
-
-    const formatHour = (date: Date) => {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      const ampm = hours >= 12 ? "pm" : "am";
-      const displayHours = hours % 12 || 12;
-      const displayMinutes = minutes.toString().padStart(2, "0");
-      return `${displayHours}.${displayMinutes} ${ampm}`;
-    };
-
-    return `${formatHour(start)} - ${formatHour(end).split(" ")[0]} ${
-      formatHour(end).split(" ")[1]
-    }`;
   }
 }
