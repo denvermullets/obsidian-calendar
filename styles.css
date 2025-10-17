@@ -1,54 +1,121 @@
+/* =============================
+   Calendar Sidebar Modern Cards
+   ============================= */
+
 .calendar-view-container {
-	padding: 1rem;
+  padding: 0.25rem;
 }
 
+/* Header */
 .calendar-header {
-	margin-bottom: 1rem;
-	padding-bottom: 0.5rem;
-	border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 
+/* Event list */
 .calendar-event-list {
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
+/* Event card */
 .calendar-event-item {
-	padding: 0.75rem;
-	background-color: var(--background-secondary);
-	border-radius: 6px;
-	border-left: 3px solid var(--interactive-accent);
+  position: relative;
+  padding: 1rem 1.25rem;
+  background-color: var(--background-primary);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--background-modifier-border);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.calendar-event-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Colored left line */
+.calendar-event-item::before {
+  content: "";
+  position: absolute;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  left: 1rem;
+  width: 3px;
+  border-radius: 2px;
+  background-color: var(--interactive-accent);
+}
+
+/* Content column */
+.calendar-event-top-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-left: 0.5rem; /* to offset the line */
 }
 
 .calendar-event-time {
-	font-size: 0.9em;
-	color: var(--text-muted);
-	margin-bottom: 0.25rem;
-	font-weight: 500;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 0.85em;
 }
 
+/* Title */
 .calendar-event-title {
-	font-size: 1em;
-	font-weight: 600;
-	margin-bottom: 0.25rem;
+  font-size: 1.05em;
+  font-weight: 600;
+  color: var(--text-normal);
+  line-height: 1.3;
 }
 
-.calendar-event-location {
-	font-size: 0.85em;
-	color: var(--text-muted);
-	margin-top: 0.25rem;
+/* Subtitle / description */
+.calendar-event-guests {
+  font-size: 0.85em;
+  color: var(--text-muted);
 }
 
+/* Optional "join" button or tag */
+.calendar-join-button {
+  width: fit-content;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 6px;
+  margin-top: 0.1rem;
+  font-size: 0.8em;
+  font-weight: 500;
+  padding: 0.3rem 0.4rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.calendar-join-button:hover {
+  background: var(--interactive-accent-hover);
+}
+
+/* Empty / error states */
 .calendar-empty-state {
-	padding: 2rem;
-	text-align: center;
-	color: var(--text-muted);
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
 }
 
 .calendar-error {
-	padding: 1rem;
-	background-color: var(--background-modifier-error);
-	border-radius: 6px;
-	color: var(--text-error);
+  padding: 1rem;
+  background-color: var(--background-modifier-error);
+  border-radius: 8px;
+  color: var(--text-error);
+}
+
+/* Accent color variants (optional) */
+.calendar-event-item[data-color="blue"]::before {
+  background-color: #5cc1ff;
+}
+.calendar-event-item[data-color="purple"]::before {
+  background-color: #8b7bff;
+}
+.calendar-event-item[data-color="yellow"]::before {
+  background-color: #ffc44d;
 }
