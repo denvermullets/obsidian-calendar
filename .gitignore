@@ -1,0 +1,15 @@
+# npm
+node_modules
+package-lock.json
+
+# build
+build/
+*.js.map
+# plugin build file
+main.js
+
+# obsidian
+data.json
+
+# Misc
+.DS_Store
