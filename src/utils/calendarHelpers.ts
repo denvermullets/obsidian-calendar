@@ -110,5 +110,6 @@ export function filterAndSortTodayEvents(events: CalendarEvent[]): FormattedEven
     conferenceLink: event.conferenceLink,
     attendeeCount: event.attendeeCount,
     isAllDay: event.isAllDay,
+    calendarColor: event.calendarColor,
   }));
 }

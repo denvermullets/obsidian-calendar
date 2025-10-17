@@ -1,5 +1,10 @@
+export interface CalendarConfig {
+  url: string;
+  color: string;
+}
+
 export interface CalendarPluginSettings {
-  icsUrls: string[];
+  calendars: CalendarConfig[];
   refreshInterval: number; // in minutes
 }
 
@@ -12,6 +17,7 @@ export interface CalendarEvent {
   conferenceLink: string;
   attendeeCount: number;
   isAllDay: boolean;
+  calendarColor: string;
 }
 
 export interface FormattedEvent {
@@ -22,4 +28,5 @@ export interface FormattedEvent {
   conferenceLink: string;
   attendeeCount: number;
   isAllDay: boolean;
+  calendarColor: string;
 }

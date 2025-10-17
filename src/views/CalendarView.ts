@@ -61,7 +61,7 @@ export class CalendarView extends ItemView {
     container.empty();
     container.addClass("calendar-view-container");
 
-    if (this.plugin.settings.icsUrls.length === 0) {
+    if (this.plugin.settings.calendars.length === 0) {
       container.createEl("div", {
         text: "No calendar URLs configured. Please add calendars in plugin settings.",
         cls: "calendar-empty-state",
@@ -86,6 +86,9 @@ export class CalendarView extends ItemView {
 
         todayEvents.forEach((event) => {
           const eventEl = eventList.createEl("div", { cls: "calendar-event-item" });
+
+          // Set custom property for the vertical bar color
+          eventEl.style.setProperty("--event-color", event.calendarColor);
 
           // Content column: time, title, guests, and join button
           const contentColumn = eventEl.createEl("div", { cls: "calendar-event-top-row" });
@@ -139,14 +142,14 @@ export class CalendarView extends ItemView {
     const allEvents: CalendarEvent[] = [];
 
     // Fetch and parse events from each calendar URL
-    for (const url of this.plugin.settings.icsUrls) {
-      if (!url.trim()) {
+    for (const calendar of this.plugin.settings.calendars) {
+      if (!calendar.url.trim()) {
         continue; // Skip empty URLs
       }
 
       try {
         const response = await requestUrl({
-          url: url,
+          url: calendar.url,
           method: "GET",
         });
 
@@ -154,9 +157,9 @@ export class CalendarView extends ItemView {
         const comp = new ICAL.Component(jcalData);
         const vevents = comp.getAllSubcomponents("vevent");
 
-        this.parseEvents(vevents, today, tomorrow, allEvents);
+        this.parseEvents(vevents, today, tomorrow, calendar.color, allEvents);
       } catch (error) {
-        console.error(`Failed to fetch calendar from ${url}:`, error);
+        console.error(`Failed to fetch calendar from ${calendar.url}:`, error);
         // Continue with other calendars even if one fails
       }
     }
@@ -169,6 +172,7 @@ export class CalendarView extends ItemView {
     vevents: any[],
     today: Date,
     tomorrow: Date,
+    calendarColor: string,
     events: CalendarEvent[]
   ): void {
 
@@ -214,6 +218,7 @@ export class CalendarView extends ItemView {
               conferenceLink: conferenceLink,
               attendeeCount: attendees.length,
               isAllDay: isAllDay,
+              calendarColor: calendarColor,
             });
             break; // Found today's occurrence, stop iterating
           }
@@ -234,6 +239,7 @@ export class CalendarView extends ItemView {
           conferenceLink: conferenceLink,
           attendeeCount: attendees.length,
           isAllDay: isAllDay,
+          calendarColor: calendarColor,
         });
       }
     });
