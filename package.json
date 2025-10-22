@@ -1,6 +1,6 @@
 {
   "name": "obsidian-calendar",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Display today's events from multiple ICS calendar feeds in your Obsidian sidebar",
   "main": "main.js",
   "scripts": {
