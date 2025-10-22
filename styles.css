@@ -109,6 +109,27 @@
   color: var(--text-error);
 }
 
+/* Expired events - muted styling */
+.calendar-event-expired {
+  opacity: 0.5;
+}
+
+.calendar-event-expired:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.calendar-event-expired .calendar-event-title,
+.calendar-event-expired .calendar-event-time,
+.calendar-event-expired .calendar-event-guests {
+  color: var(--text-faint);
+}
+
+.calendar-event-expired .calendar-join-button {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Accent color variants (optional) */
 .calendar-event-item[data-color="blue"]::before {
   background-color: #5cc1ff;
