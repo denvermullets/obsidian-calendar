@@ -7,7 +7,6 @@ import {
   extractConferenceLink,
   filterAndSortTodayEvents,
   getTodayMidnight,
-  getTomorrowMidnight,
 } from "../utils/calendarHelpers";
 
 export class CalendarView extends ItemView {
@@ -58,10 +57,11 @@ export class CalendarView extends ItemView {
 
   async renderCalendar() {
     const container = this.containerEl.children[1];
-    container.empty();
-    container.addClass("calendar-view-container");
 
+    // Check for empty calendars before fetching
     if (this.plugin.settings.calendars.length === 0) {
+      container.empty();
+      container.addClass("calendar-view-container");
       container.createEl("div", {
         text: "No calendar URLs configured. Please add calendars in plugin settings.",
         cls: "calendar-empty-state",
@@ -70,8 +70,13 @@ export class CalendarView extends ItemView {
     }
 
     try {
+      // Fetch data first, before clearing the container
       const events = await this.fetchAndParseCalendar();
-      const todayEvents = filterAndSortTodayEvents(events);
+      const todayEvents = filterAndSortTodayEvents(events, this.plugin.settings.showExpiredEvents);
+
+      // Now clear and re-render with the new data
+      container.empty();
+      container.addClass("calendar-view-container");
 
       if (todayEvents.length === 0) {
         container.createEl("div", {
@@ -86,6 +91,11 @@ export class CalendarView extends ItemView {
 
         todayEvents.forEach((event) => {
           const eventEl = eventList.createEl("div", { cls: "calendar-event-item" });
+
+          // Add expired class if event has ended
+          if (event.isExpired) {
+            eventEl.addClass("calendar-event-expired");
+          }
 
           // Set custom property for the vertical bar color
           eventEl.style.setProperty("--event-color", event.calendarColor);
@@ -117,7 +127,8 @@ export class CalendarView extends ItemView {
               text: "Join Meeting",
               cls: "calendar-join-button",
             });
-            if (event.conferenceLink) {
+            // Only make the button clickable if the event hasn't expired
+            if (event.conferenceLink && !event.isExpired) {
               joinBtn.addEventListener("click", () => {
                 window.open(event.conferenceLink, "_blank");
               });
@@ -137,7 +148,6 @@ export class CalendarView extends ItemView {
   private async fetchAndParseCalendar(): Promise<CalendarEvent[]> {
     // Set up date range for today
     const today = getTodayMidnight();
-    const tomorrow = getTomorrowMidnight();
 
     const allEvents: CalendarEvent[] = [];
 
@@ -157,7 +167,7 @@ export class CalendarView extends ItemView {
         const comp = new ICAL.Component(jcalData);
         const vevents = comp.getAllSubcomponents("vevent");
 
-        this.parseEvents(vevents, today, tomorrow, calendar.color, allEvents);
+        this.parseEvents(vevents, today, calendar.color, allEvents);
       } catch (error) {
         console.error(`Failed to fetch calendar from ${calendar.url}:`, error);
         // Continue with other calendars even if one fails
@@ -171,7 +181,6 @@ export class CalendarView extends ItemView {
   private parseEvents(
     vevents: any[],
     today: Date,
-    tomorrow: Date,
     calendarColor: string,
     events: CalendarEvent[]
   ): void {
@@ -189,6 +198,9 @@ export class CalendarView extends ItemView {
       const isAllDay = event.startDate.isDate || false;
 
       if (event.isRecurring()) {
+        // Calculate duration from the original event
+        const duration = event.duration;
+
         // Expand recurring events for today only
         const iter = event.iterator();
         let next;
@@ -206,8 +218,11 @@ export class CalendarView extends ItemView {
           occurrenceDay.setHours(0, 0, 0, 0);
 
           if (occurrenceDay.getTime() === today.getTime()) {
-            // This occurrence is today, add it
-            const endDate = event.endDate ? event.endDate.toJSDate() : occurrenceDate;
+            // Calculate end date for this occurrence using the duration
+            const endDate = new Date(occurrenceDate);
+            if (duration) {
+              endDate.setSeconds(endDate.getSeconds() + duration.toSeconds());
+            }
 
             events.push({
               title: event.summary || "Untitled Event",

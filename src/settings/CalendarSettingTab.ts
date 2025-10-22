@@ -36,5 +36,18 @@ export class CalendarSettingTab extends PluginSettingTab {
             }
           })
       );
+
+    // Show expired events setting
+    new Setting(containerEl)
+      .setName("Show Expired Events")
+      .setDesc("Keep expired events visible in a muted style")
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.showExpiredEvents)
+          .onChange(async (value) => {
+            this.plugin.settings.showExpiredEvents = value;
+            await this.plugin.saveSettings();
+          })
+      );
   }
 }

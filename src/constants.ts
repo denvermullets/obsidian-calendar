@@ -3,6 +3,7 @@ import { CalendarPluginSettings } from "./types";
 export const DEFAULT_SETTINGS: CalendarPluginSettings = {
   calendars: [],
   refreshInterval: 30,
+  showExpiredEvents: false,
 };
 
 export const VIEW_TYPE_CALENDAR = "calendar-view";

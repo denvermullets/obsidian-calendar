@@ -81,9 +81,17 @@ export function isEventToday(event: CalendarEvent, today: Date): boolean {
 }
 
 /**
+ * Checks if an event has expired (end time has passed)
+ */
+export function isEventExpired(event: CalendarEvent): boolean {
+  const now = new Date();
+  return event.endDate < now;
+}
+
+/**
  * Filters and sorts events for today
  */
-export function filterAndSortTodayEvents(events: CalendarEvent[]): FormattedEvent[] {
+export function filterAndSortTodayEvents(events: CalendarEvent[], showExpiredEvents: boolean): FormattedEvent[] {
   const today = getTodayMidnight();
 
   console.log("Filtering for today:", today.toISOString());
@@ -102,7 +110,7 @@ export function filterAndSortTodayEvents(events: CalendarEvent[]): FormattedEven
     return a.startDate.getTime() - b.startDate.getTime();
   });
 
-  return todayEvents.map((event) => ({
+  const formattedEvents = todayEvents.map((event) => ({
     title: event.title,
     time: formatEventTime(event.startDate, event.endDate, event.isAllDay),
     location: event.location,
@@ -111,5 +119,15 @@ export function filterAndSortTodayEvents(events: CalendarEvent[]): FormattedEven
     attendeeCount: event.attendeeCount,
     isAllDay: event.isAllDay,
     calendarColor: event.calendarColor,
+    // All-day events are never expired (they're for the whole day)
+    // Timed events are expired when their end time has passed
+    isExpired: event.isAllDay ? false : isEventExpired(event),
   }));
+
+  // Filter out expired events if setting is disabled
+  if (!showExpiredEvents) {
+    return formattedEvents.filter((event) => !event.isExpired);
+  }
+
+  return formattedEvents;
 }

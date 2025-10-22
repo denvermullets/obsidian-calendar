@@ -6,6 +6,7 @@ export interface CalendarConfig {
 export interface CalendarPluginSettings {
   calendars: CalendarConfig[];
   refreshInterval: number; // in minutes
+  showExpiredEvents: boolean;
 }
 
 export interface CalendarEvent {
@@ -29,4 +30,5 @@ export interface FormattedEvent {
   attendeeCount: number;
   isAllDay: boolean;
   calendarColor: string;
+  isExpired: boolean;
 }
